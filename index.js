@@ -1,7 +1,6 @@
 const cytoscape = require('cytoscape');
 const fs = require('fs');
 
-// Генерация случайного графа (можно заменить на свой способ генерации)
 function generateRandomGraph(nodes, edges) {
   const graph = { nodes: [], edges: [] };
 
@@ -10,10 +9,10 @@ function generateRandomGraph(nodes, edges) {
   }
 
   for (let i = 0; i < edges; i++) {
-    const source = Math.floor(Math.random() * nodes);
-    let target = Math.floor(Math.random() * nodes);
+    const source = getRandomInt(nodes);
+    let target = getRandomInt(nodes);
     while (target === source) {
-      target = Math.floor(Math.random() * nodes);
+      target = getRandomInt(nodes);
     }
     graph.edges.push({ data: { source, target } });
   }
@@ -21,41 +20,40 @@ function generateRandomGraph(nodes, edges) {
   return graph;
 }
 
-// Основная функция для покраски графа
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
 function colorGraph(graph) {
-  // Массив цветов для вершин
   const colors = {};
 
-  // Функция для проверки, можно ли окрасить вершину в данный цвет
   function isColorValid(node, color) {
-    const neighbors = graph.edges.filter(edge => edge.data.source === node.data.id || edge.data.target === node.data.id);
+    const neighbors = graph.edges.filter(edge =>
+      edge.data.source === node.data.id || edge.data.target === node.data.id
+    );
     for (const neighbor of neighbors) {
       const neighborNode = neighbor.data.source === node.data.id ? neighbor.data.target : neighbor.data.source;
       if (colors[neighborNode] === color) {
-        return false; // Вершина имеет соседа с таким же цветом
+        return false; 
       }
     }
-    return true; // Цвет вершины допустим
+    return true; 
   }
 
-  // Проходим по каждой вершине и раскрашиваем ее
   graph.nodes.forEach(node => {
-    // Перебираем возможные цвета
     for (let color = 1; ; color++) {
       if (isColorValid(node, color)) {
-        colors[node.data.id] = color; // Окрашиваем вершину в данный цвет
+        colors[node.data.id] = color; 
         break;
       }
     }
   });
 
-  // Возвращаем массив цветов для каждой вершины
   return colors;
 }
 
-// Функция для создания HTML-страницы с отрисованным графом
 function generateGraphHtml(graph, colors) {
-    const html = `
+  const html = `
     <html>
     <head>
         <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
@@ -98,15 +96,18 @@ function generateGraphHtml(graph, colors) {
     </html>
     `;
 
-    fs.writeFileSync('graph_with_colors.html', html);
-    console.log('Граф с цветами сохранен в файл "graph_with_colors.html"');
+    try {
+        fs.writeFileSync('graph_with_colors.html', html);
+    } catch (error) {
+        console.error(error);
+    }  
 }
 
-// Создаем случайный граф
+module.exports = { generateRandomGraph, colorGraph };
+
+
 const randomGraph = generateRandomGraph(10, 15);
 
-// Запускаем алгоритм покраски
 const colors = colorGraph(randomGraph);
 
-// Отображаем результат покраски
 generateGraphHtml(randomGraph, colors);

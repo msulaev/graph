@@ -1,6 +1,10 @@
 const cytoscape = require('cytoscape');
 const fs = require('fs');
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
 function generateRandomGraph(nodes, edges) {
   const graph = { nodes: [], edges: [] };
 
@@ -11,39 +15,41 @@ function generateRandomGraph(nodes, edges) {
   for (let i = 0; i < edges; i++) {
     const source = getRandomInt(nodes);
     let target = getRandomInt(nodes);
+
     while (target === source) {
       target = getRandomInt(nodes);
     }
+
     graph.edges.push({ data: { source, target } });
   }
 
   return graph;
 }
 
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
+function isColorValid(node, color, colors) {
+  const neighbors = colors.edges.filter(edge =>
+    edge.data.source === node.data.id || edge.data.target === node.data.id
+  );
+
+  for (const neighbor of neighbors) {
+    const neighborNode =
+      neighbor.data.source === node.data.id ? neighbor.data.target : neighbor.data.source;
+
+    if (colors.nodes[neighborNode] === color) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function colorGraph(graph) {
-  const colors = {};
-
-  function isColorValid(node, color) {
-    const neighbors = graph.edges.filter(edge =>
-      edge.data.source === node.data.id || edge.data.target === node.data.id
-    );
-    for (const neighbor of neighbors) {
-      const neighborNode = neighbor.data.source === node.data.id ? neighbor.data.target : neighbor.data.source;
-      if (colors[neighborNode] === color) {
-        return false; 
-      }
-    }
-    return true; 
-  }
+  const colors = { nodes: {}, edges: [] };
 
   graph.nodes.forEach(node => {
     for (let color = 1; ; color++) {
-      if (isColorValid(node, color)) {
-        colors[node.data.id] = color; 
+      if (isColorValid(node, color, colors)) {
+        colors.nodes[node.data.id] = color;
         break;
       }
     }
@@ -77,7 +83,7 @@ function generateGraphHtml(graph, colors) {
                             selector: 'node',
                             style: {
                                 'background-color': function(ele) {
-                                  return 'rgb(' + ${JSON.stringify(colors)}[ele.id()] * 50 + ', 0, 0)';
+                                  return 'rgb(' + ${JSON.stringify(colors.nodes)}[ele.id()] * 50 + ', 0, 0)';
                                 },
                                 'label': 'data(id)'
                             }
@@ -96,18 +102,11 @@ function generateGraphHtml(graph, colors) {
     </html>
     `;
 
-    try {
-        fs.writeFileSync('graph_with_colors.html', html);
-    } catch (error) {
-        console.error(error);
-    }  
+  try {
+    fs.writeFileSync('.graph_with_colors.html', html);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-module.exports = { generateRandomGraph, colorGraph };
-
-
-const randomGraph = generateRandomGraph(10, 15);
-
-const colors = colorGraph(randomGraph);
-
-generateGraphHtml(randomGraph, colors);
+module.exports = { generateRandomGraph, colorGraph, generateGraphHtml };

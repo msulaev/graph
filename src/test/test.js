@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { generateRandomGraph, colorGraph } = require('./index.js');
+const { generateRandomGraph, colorGraph } = require('../graph.js');
 
 describe('Graph Coloring Algorithm', () => {
   describe('generateRandomGraph', () => {
